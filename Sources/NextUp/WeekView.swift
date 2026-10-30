@@ -3,30 +3,20 @@ import NextUpCore
 
 struct WeekView: View {
     @EnvironmentObject var store: Store
-    @State private var editingTargets = false
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Make space for what matters.").font(.system(size: 30, weight: .semibold, design: .rounded))
-                    Text("A weekly direction, with room for life. Resets every Monday.")
-                        .font(.system(size: 14)).foregroundStyle(Theme.muted)
-                }
-                Spacer()
-                Button("Edit targets") { editingTargets = true }.buttonStyle(SoftButton())
-            }
             HStack(spacing: 18) {
-                metric("FOCUSED TIME", durationLabel(Planner.secondsThisWeek(store.data) / 60), "From your logged sessions")
-                metric("WEEKLY TARGET", durationLabel(store.data.targets.reduce(0) { $0 + $1.minutes }), "A guide, not a quota")
+                metric("FOCUSED TIME", durationLabel(Planner.secondsThisWeek(store.data) / 60))
+                metric("WEEKLY TARGET", durationLabel(store.data.targets.reduce(0) { $0 + $1.minutes }))
             }
             VStack(alignment: .leading, spacing: 24) {
-                Text("YOUR BALANCE").eyebrow()
+                Text("TIME BY AREA").eyebrow()
                 ForEach(Area.allCases) { area in
                     let target = store.data.targets.first { $0.area == area }?.minutes ?? 0
                     let seconds = Planner.secondsThisWeek(store.data, area: area)
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Label(area.rawValue, systemImage: area.symbol).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.tint(area))
+                            Text(area.rawValue).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.tint(area))
                             Spacer()
                             Text(target == 0 ? "\(durationLabel(seconds / 60)) · no target" : "\(durationLabel(seconds / 60)) / \(durationLabel(target))")
                                 .font(.system(size: 12)).foregroundStyle(Theme.muted)
@@ -40,20 +30,14 @@ struct WeekView: View {
                     }
                 }
             }.card()
-            VStack(alignment: .leading, spacing: 12) {
-                Label("How your targets affect recommendations", systemImage: "info.circle").font(.system(size: 14, weight: .semibold))
-                Text("Areas with time left in their target get a boost. Urgent deadlines still take priority. Targets never block you from working on an area, and unfinished time does not roll into next week.")
-                    .font(.system(size: 13)).foregroundStyle(Theme.muted).lineSpacing(5)
-                Text("Start with hours you can realistically protect after classes, sleep, meals, and breaks. Set a target to zero to remove its weekly boost.")
-                    .font(.system(size: 13)).foregroundStyle(Theme.muted).lineSpacing(5)
-            }.card()
-        }.sheet(isPresented: $editingTargets) { TargetEditor() }
+            Text("Weeks start Monday. Totals include saved sessions only.")
+                .font(.system(size: 12)).foregroundStyle(Theme.muted)
+        }
     }
-    private func metric(_ title: String, _ value: String, _ subtitle: String) -> some View {
+    private func metric(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).eyebrow()
             Text(value).font(.system(size: 30, weight: .semibold, design: .rounded))
-            Text(subtitle).font(.system(size: 12)).foregroundStyle(Theme.muted)
         }.card()
     }
 }
@@ -64,8 +48,8 @@ struct TargetEditor: View {
     @State private var targets: [WeeklyTarget] = []
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
-            Text("A week that fits your life.").font(.system(size: 25, weight: .semibold, design: .rounded))
-            Text("Starting suggestions only. Adjust these to your real availability.")
+            Text("Weekly targets").font(.system(size: 24, weight: .semibold))
+            Text("Areas below target get higher recommendation priority. Set a target to 0 to disable its boost.")
                 .font(.system(size: 13)).foregroundStyle(Theme.muted)
             ForEach(targets.indices, id: \.self) { i in
                 HStack {
@@ -91,15 +75,10 @@ struct HistoryView: View {
     @EnvironmentObject var store: Store
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Small steps add up.").font(.system(size: 32, weight: .semibold, design: .rounded))
-                Text("A record of what you actually moved forward.").foregroundStyle(Theme.muted)
-            }
             if store.data.sessions.isEmpty {
                 VStack(alignment: .leading, spacing: 14) {
-                    Image(systemName: "clock").font(.system(size: 28)).foregroundStyle(Theme.purple)
-                    Text("Your first session starts a story.").font(.system(size: 20, weight: .semibold, design: .rounded))
-                    Text("Start a focus session from Right now. When you finish, the result and your next action will appear here.")
+                    Text("No sessions").font(.system(size: 20, weight: .semibold))
+                    Text("Start and finish a session in Right now to log time.")
                         .font(.system(size: 14)).foregroundStyle(Theme.muted)
                 }.card()
             }

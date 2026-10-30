@@ -5,7 +5,7 @@ import NextUpCore
 enum Page: String, CaseIterable {
     case now = "Right now", tasks = "Tasks", week = "This week", history = "History"
     var symbol: String {
-        switch self { case .now: "sparkle"; case .tasks: "checklist"; case .week: "chart.bar.xaxis"; case .history: "clock.arrow.circlepath" }
+        switch self { case .now: "play.circle"; case .tasks: "checklist"; case .week: "chart.bar.xaxis"; case .history: "clock.arrow.circlepath" }
     }
 }
 
@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var page: Page = .now
     @State private var editing: WorkTask?
     @State private var showNew = false
+    @State private var showTargets = false
     private let checkpoint = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -23,12 +24,17 @@ struct ContentView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
                     HStack {
-                        Text(page.rawValue.uppercased()).eyebrow()
+                        Text(page.rawValue).font(.system(size: 22, weight: .semibold))
                         Spacer()
                         Text(Date.now, format: .dateTime.weekday(.wide).month(.abbreviated).day())
                             .font(.system(size: 12)).foregroundStyle(Theme.muted)
-                        Button { showNew = true } label: { Label("Add task", systemImage: "plus") }
-                            .buttonStyle(SoftButton()).disabled(store.loadFailed)
+                        if page == .week {
+                            Button("Edit targets") { showTargets = true }
+                                .buttonStyle(SoftButton()).disabled(store.loadFailed)
+                        } else if page == .now || page == .tasks {
+                            Button { showNew = true } label: { Label("Add task", systemImage: "plus") }
+                                .buttonStyle(SoftButton()).disabled(store.loadFailed)
+                        }
                     }
                     if store.loadFailed {
                         VStack(alignment: .leading, spacing: 14) {
@@ -52,6 +58,7 @@ struct ContentView: View {
         }
         .foregroundStyle(Theme.ink).tint(Theme.purple)
         .sheet(isPresented: $showNew) { TaskEditor(task: WorkTask(title: "")) }
+        .sheet(isPresented: $showTargets) { TargetEditor() }
         .sheet(item: $editing) { TaskEditor(task: $0) }
         .alert("Something needs attention", isPresented: Binding(get: { store.error != nil }, set: { if !$0 { store.error = nil } })) {
             Button("OK") { store.error = nil }
@@ -65,13 +72,8 @@ struct ContentView: View {
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 11) {
-                Image(systemName: "arrow.up.right").font(.system(size: 20, weight: .bold))
-                    .frame(width: 36, height: 36).background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
-                Text("next up").font(.system(size: 24, weight: .semibold, design: .rounded))
-            }.padding(.bottom, 9)
-            Text("A little direction. Real progress.").font(.system(size: 11)).foregroundStyle(.white.opacity(0.5))
-                .padding(.bottom, 44)
+            Text("Next Up").font(.system(size: 22, weight: .semibold))
+                .padding(.horizontal, 12).padding(.bottom, 36)
             ForEach(Page.allCases, id: \.self) { item in
                 Button { page = item } label: {
                     HStack(spacing: 12) {
@@ -94,11 +96,6 @@ struct ContentView: View {
                     .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Color(red: 0.71, green: 0.83, blue: 0.66))
                     .padding(.bottom, 20)
             }
-            VStack(alignment: .leading, spacing: 9) {
-                Text("Enough is a good goal.").font(.system(size: 13, weight: .medium))
-                Text("Make time for what matters.\nLeave room to be human.")
-                    .font(.system(size: 11)).lineSpacing(4).foregroundStyle(.white.opacity(0.47))
-            }.padding(.bottom, 24)
             Divider().overlay(.white.opacity(0.1)).padding(.bottom, 16)
             Menu {
                 Button("Export backup…") { store.exportBackup() }.disabled(store.loadFailed)

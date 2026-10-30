@@ -35,7 +35,7 @@ public enum Planner {
             if let due = task.due {
                 let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: now),
                                                     to: calendar.startOfDay(for: due)).day ?? 0
-                if days < 0 { score += 220; reasons.append("Overdue — this needs attention first.") }
+                if days < 0 { score += 220; reasons.append("Overdue.") }
                 else if days == 0 { score += 190; reasons.append("Due today.") }
                 else if days == 1 { score += 150; reasons.append("Due tomorrow.") }
                 else if days <= 3 { score += 105; reasons.append("Due in \(days) days.") }
@@ -44,7 +44,7 @@ public enum Planner {
                 if days > 0 && days <= 14 {
                     let dailyLoad = Double(task.remainingMinutes) / Double(days)
                     score += min(60, dailyLoad / 2)
-                    if dailyLoad >= 60 { reasons.append("A larger task — an early start will help.") }
+                    if dailyLoad >= 60 { reasons.append("At least 1 hour per day remains before the deadline.") }
                 }
             }
             let target = data.targets.first { $0.area == task.area }?.minutes ?? 0

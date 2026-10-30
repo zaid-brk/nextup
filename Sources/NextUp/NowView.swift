@@ -18,12 +18,6 @@ struct NowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading, spacing: 9) {
-                Text(store.data.active == nil ? "One thing at a time." : "You’ve made room to focus.")
-                    .font(.system(size: 34, weight: .semibold, design: .rounded))
-                Text(store.data.active == nil ? "Choose the moment. We’ll help you choose the work." : "Stay with this task. Everything else can wait.")
-                    .font(.system(size: 14)).foregroundStyle(Theme.muted)
-            }
             if let active = store.data.active {
                 activeCard(active)
             } else if store.data.tasks.isEmpty {
@@ -34,9 +28,8 @@ struct NowView: View {
                     recommendationCard(rec)
                 } else {
                     VStack(alignment: .leading, spacing: 16) {
-                        Image(systemName: "sun.horizon").font(.system(size: 28)).foregroundStyle(Theme.purple)
-                        Text(openTasks.isEmpty ? "You’ve cleared your list." : "Nothing matches this moment.").font(.title2.bold())
-                        Text(openTasks.isEmpty ? "Take a break, or add your next meaningful task." : "Your tasks may need more energy, be blocked, or have been skipped. It’s okay to take a break too.")
+                        Text(openTasks.isEmpty ? "No open tasks" : "No matching tasks").font(.title2.bold())
+                        Text(openTasks.isEmpty ? "Add a task to get a recommendation." : "Tasks may require more energy, be blocked, or have been skipped.")
                             .foregroundStyle(Theme.muted)
                         HStack {
                             if !skipped.isEmpty { Button("Show skipped tasks") { skipped.removeAll() }.buttonStyle(SoftButton()) }
@@ -57,32 +50,14 @@ struct NowView: View {
 
     private var welcome: some View {
         VStack(alignment: .leading, spacing: 22) {
-            HStack {
-                Image(systemName: "sparkle").font(.system(size: 28)).foregroundStyle(Theme.purple)
-                Spacer()
-                Text("LET’S GET YOU STARTED").eyebrow()
-            }
-            Text("Less deciding. More doing.").font(.system(size: 26, weight: .semibold, design: .rounded))
-            Text("Add a few things you want to move forward. Include deadlines and a clear finish line. Next Up will suggest a useful step whenever you have time.")
+            Text("No tasks").font(.system(size: 20, weight: .semibold))
+            Text("Add tasks with time estimates and optional deadlines to get recommendations. Set weekly targets in This week.")
                 .font(.system(size: 14)).foregroundStyle(Theme.muted).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
-            HStack(alignment: .top, spacing: 26) {
-                setupStep("01", "Capture the work", "An assignment, a project feature, or something personal.")
-                setupStep("02", "Set a weekly balance", "Adjust the starting targets in This week to fit your schedule.")
-                setupStep("03", "Pick your moment", "Tell us your time and energy. Get one next action.")
-            }.padding(.vertical, 5)
             HStack(spacing: 16) {
                 Button(action: addTask) { Label("Add your first task", systemImage: "plus") }.buttonStyle(PrimaryButton())
                 Button("Try example tasks") { exampleConfirmation = true }.buttonStyle(.plain).foregroundStyle(Theme.muted)
             }
         }.card()
-    }
-
-    private func setupStep(_ number: String, _ title: String, _ detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(number).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundStyle(Theme.purple)
-            Text(title).font(.system(size: 13, weight: .semibold))
-            Text(detail).font(.system(size: 12)).foregroundStyle(Theme.muted).lineSpacing(3)
-        }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var controls: some View {
@@ -113,7 +88,7 @@ struct NowView: View {
     private func recommendationCard(_ rec: Recommendation) -> some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
-                Label("YOUR NEXT GOOD STEP", systemImage: "sparkle").eyebrow()
+                Text("RECOMMENDED TASK").eyebrow()
                 Spacer()
                 Text("\(rec.minutes) MIN FOCUS").font(.system(size: 10, weight: .bold, design: .monospaced))
                     .foregroundStyle(Theme.purple)
@@ -128,14 +103,14 @@ struct NowView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             VStack(alignment: .leading, spacing: 9) {
-                Text("WHY THIS, NOW").eyebrow()
+                Text("WHY THIS TASK").eyebrow()
                 ForEach(rec.reasons, id: \.self) { reason in
-                    Label(reason, systemImage: "checkmark").font(.system(size: 12)).foregroundStyle(Theme.muted)
+                    Text(reason).font(.system(size: 12)).foregroundStyle(Theme.muted)
                 }
             }
             if !rec.task.finishLine.isEmpty {
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("TASK FINISH LINE").eyebrow()
+                    Text("DONE WHEN").eyebrow()
                     Text(rec.task.finishLine).font(.system(size: 13)).lineSpacing(3)
                 }.padding(15).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Theme.canvas, in: RoundedRectangle(cornerRadius: 10))
@@ -161,7 +136,7 @@ struct NowView: View {
                 HStack {
                     AreaBadge(area: active.area)
                     Spacer()
-                    Text(active.runningSince == nil ? "PAUSED" : remaining == 0 ? "READY TO WRAP UP" : "FOCUS SESSION").eyebrow()
+                    Text(active.runningSince == nil ? "PAUSED" : remaining == 0 ? "TIME ELAPSED" : "FOCUS SESSION").eyebrow()
                 }
                 Text(active.title).font(.system(size: 26, weight: .semibold, design: .rounded))
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -170,8 +145,10 @@ struct NowView: View {
                     Text("remaining").font(.system(size: 14)).foregroundStyle(Theme.muted)
                 }
                 ProgressView(value: min(Double(elapsed) / Double(active.targetMinutes * 60), 1)).tint(Theme.purple)
-                Text(remaining == 0 ? "Your planned time is up. Wrap up when you’re ready; you can correct the logged time below." : "A small, focused step is enough. Pause whenever you need to.")
-                    .font(.system(size: 13)).foregroundStyle(Theme.muted)
+                if remaining == 0 {
+                    Text("Planned time elapsed. Finish the session to review and save your time.")
+                        .font(.system(size: 13)).foregroundStyle(Theme.muted)
+                }
                 HStack {
                     Button(active.runningSince == nil ? "Resume" : "Pause") {
                         if active.runningSince == nil { store.resume() } else { store.pause() }
@@ -194,8 +171,6 @@ struct NowView: View {
             Spacer()
             Text("\(store.data.sessions.filter { $0.endedAt >= Planner.weekStart(at: .now) && $0.outcome == .complete }.count) tasks finished")
                 .font(.system(size: 12)).foregroundStyle(Theme.muted)
-            Divider().frame(height: 28)
-            Text("Progress counts. Breaks belong.").font(.system(size: 12)).foregroundStyle(Theme.muted)
         }.padding(.vertical, 8)
     }
 }
@@ -209,17 +184,17 @@ struct FinishSessionView: View {
     @State private var discard = false
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("A step forward.").font(.system(size: 27, weight: .semibold, design: .rounded))
+            Text("Finish session").font(.system(size: 24, weight: .semibold))
             Text(store.data.active?.title ?? "Session").foregroundStyle(Theme.muted)
-            Picker("How did it go?", selection: $outcome) {
+            Picker("Result", selection: $outcome) {
                 ForEach(Outcome.allCases) { Text($0.rawValue).tag($0) }
             }.pickerStyle(.segmented)
             Stepper("Focused time: \(durationLabel(minutes))", value: $minutes, in: 0...1440, step: 1)
-            Text("Adjust this if you stepped away. Only this time is added to your weekly totals.")
+            Text("Only this time is added to your weekly totals.")
                 .font(.system(size: 12)).foregroundStyle(Theme.muted)
-            Text(outcome == .blocked ? "What’s blocking you?" : outcome == .complete ? "Anything to remember?" : "Leave yourself a next action")
+            Text(outcome == .blocked ? "Blocker" : outcome == .complete ? "Notes" : "Next action")
                 .font(.system(size: 13, weight: .semibold))
-            TextField("A specific note for your next session…", text: $note, axis: .vertical)
+            TextField("Optional", text: $note, axis: .vertical)
                 .lineLimit(3...5).textFieldStyle(.roundedBorder)
             if outcome == .blocked {
                 Text("This task will stay out of recommendations until you unblock it in Tasks.")

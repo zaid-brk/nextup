@@ -49,10 +49,9 @@ extension View {
 struct AreaBadge: View {
     let area: Area
     var body: some View {
-        Label(area.rawValue, systemImage: area.symbol)
+        Text(area.rawValue)
             .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Theme.tint(area)).padding(.horizontal, 10).padding(.vertical, 6)
-            .background(Theme.tint(area).opacity(0.09), in: Capsule())
+            .foregroundStyle(Theme.tint(area))
     }
 }
 

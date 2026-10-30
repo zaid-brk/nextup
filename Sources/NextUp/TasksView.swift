@@ -21,10 +21,6 @@ struct TasksView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Give your work a place.").font(.system(size: 32, weight: .semibold, design: .rounded))
-                Text("Small enough to start. Clear enough to finish.").foregroundStyle(Theme.muted)
-            }
             HStack {
                 TextField("Search tasks or courses", text: $search).textFieldStyle(.roundedBorder).frame(maxWidth: 330)
                 Spacer()
@@ -34,8 +30,8 @@ struct TasksView: View {
             }
             if filtered.isEmpty {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Nothing here yet.").font(.title2.bold())
-                    Text(search.isEmpty ? "Add a task you want to move forward." : "Try another search or status filter.").foregroundStyle(Theme.muted)
+                    Text("No tasks").font(.title2.bold())
+                    Text(store.data.tasks.isEmpty ? "Add a task to get started." : "Try another search or status filter.").foregroundStyle(Theme.muted)
                     Button("Add task", action: addTask).buttonStyle(PrimaryButton())
                 }.card()
             }
@@ -115,9 +111,8 @@ struct TaskEditor: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(existing ? "Make the next step clearer." : "What do you want to move forward?")
-                        .font(.system(size: 24, weight: .semibold, design: .rounded))
-                    Text("Specific tasks make better recommendations.").font(.system(size: 12)).foregroundStyle(Theme.muted)
+                    Text(existing ? "Edit task" : "New task")
+                        .font(.system(size: 24, weight: .semibold))
                 }
                 Spacer()
             }
@@ -157,7 +152,7 @@ struct TaskEditor: View {
                         TextField("e.g. Open the practice set and attempt problem one", text: $task.nextAction, axis: .vertical).lineLimit(2...3)
                     }
                     if existing && !task.isComplete { Toggle("Blocked — exclude from recommendations", isOn: $task.isBlocked) }
-                    Text("Large tasks can span multiple sessions. Keep estimates rough and update them as you learn.")
+                    Text("Tasks longer than your available time are split into sessions.")
                         .font(.system(size: 12)).foregroundStyle(Theme.muted)
                 }.textFieldStyle(.roundedBorder).padding(2)
             }
